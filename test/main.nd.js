@@ -87,7 +87,9 @@ t('Leader takeover', function*(){
 
   for(let i = 0;i < N;i++) shards[i] = s1.acquire('/shard-lock-test2');
   yield wait(300);
+
   for(let i = 0;i < N;i++) shards2[i] = s2.acquire('/shard-lock-test2');
+  yield wait(300);
 
   s1.close();
 
