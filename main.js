@@ -136,7 +136,7 @@ function wrap(yd, shard, accept){
 }
 
 function wrappedListener(shard){
-  if(this.rejected) shard[lostCb]();
+  if(this.rejected && !shard.lost().done) shard[lostCb]();
 }
 
 acquire = walk.wrap(function*(shard, basePath = '/shard-lock'){
@@ -146,6 +146,7 @@ acquire = walk.wrap(function*(shard, basePath = '/shard-lock'){
       change, children, childrenChange;
 
   shard[zk] = this[zk];
+  shard[bp] = shard.path = basePath;
   yield initZk(this, shard);
 
   do{
@@ -222,7 +223,6 @@ acquire = walk.wrap(function*(shard, basePath = '/shard-lock'){
   }
 
   shard[gp] = groupPath;
-  shard[bp] = shard.path = basePath;
   shard[node] = nodePath;
   nodeName = nodePath.split('/').slice(-1)[0];
 
@@ -244,8 +244,10 @@ acquire = walk.wrap(function*(shard, basePath = '/shard-lock'){
       [children, stat] = yield this[zk].w_get_children2(groupPath, childrenChange);
       children = children .filter(child => child.indexOf('node-') != -1)
                           .sort()
-                          .map(getPosition)
-                          .join(',');
+                          .map(getPosition);
+
+      children = new Int32Array(children);
+      children = new Buffer(children.buffer);
 
       if(!stat.dataLength){
         try{
@@ -277,11 +279,10 @@ acquire = walk.wrap(function*(shard, basePath = '/shard-lock'){
 
   }
 
-  data = data.toString();
-  children = data.split(',');
+  children = new Int32Array(data.buffer);
   shard[chl] = children.length;
 
-  current = children.indexOf(getPosition(nodeName) + '');
+  current = children.indexOf(getPosition(nodeName));
 
   if(current == -1){
     yield shard.release();
@@ -382,7 +383,12 @@ initZk = walk.wrap(function*(shardLock, shard){
 
     if(shardLock[it]){
       let w = wait(shardLock[it]);
-      awaitCb = cb => ({cb, w});
+
+      awaitCb = cb => {
+        Resolver.Yielded.get(cb).throws = false;
+        return {cb, w};
+      };
+
     }else{
       awaitCb = cb => cb;
     }
@@ -441,7 +447,7 @@ getGroups = walk.wrap(function*(zk, basePath, watch){
 
   try{
 
-    yield groups.map((p, i) => {
+    yield groups.filter((g, i) => info[i] != null).map((p, i) => {
       let [children, stat] = info[i],
           normalChildren = children.filter(child => child.indexOf('node-') != -1),
           acks = children.filter(child => child.indexOf('ack-') != -1),
