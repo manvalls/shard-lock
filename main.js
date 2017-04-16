@@ -14,7 +14,7 @@ var path = require('path'),
     bp = Symbol(),
     gp = Symbol(),
     wt = Symbol(),
-    lst = Symbol(),
+    chl = Symbol(),
 
     acquire, release, requested, lost, check, ack,
     initZk, getGroups;
@@ -137,9 +137,9 @@ function wrappedListener(shard){
 
 acquire = walk.wrap(function*(shard, basePath){
   var prefix = path.resolve(basePath, 'group-'),
-      processing, awaiting, data, last, current,
+      processing, awaiting, data, current,
       group, groupPath, nodePath, nodeName,
-      change, childrenChange;
+      change, children, childrenChange;
 
   shard[zk] = this[zk];
   yield initZk(this, shard);
@@ -238,14 +238,14 @@ acquire = walk.wrap(function*(shard, basePath){
       yield wait(this[wt]);
       childrenChange = Cb();
       [children, stat] = yield this[zk].w_get_children2(groupPath, childrenChange);
-      children = children.filter(child => child.indexOf('node-') != -1);
-      children.sort();
+      children = children .filter(child => child.indexOf('node-') != -1)
+                          .sort()
+                          .map(getPosition)
+                          .join(',');
 
       if(!stat.dataLength){
-        let last = children[children.length - 1];
-
         try{
-          yield this[zk].set(groupPath, getPosition(last) + '', stat.version);
+          yield this[zk].set(groupPath, children, stat.version);
         }catch(err){
           if(err != ZBADVERSION) throw err;
         }
@@ -274,17 +274,18 @@ acquire = walk.wrap(function*(shard, basePath){
   }
 
   data = data.toString();
-  shard[lst] = last = parseInt(data);
-  current = getPosition(nodeName);
+  children = data.split(',');
+  shard[chl] = children.length;
 
-  if(current > last){
-    yield shard.free();
+  current = children.indexOf(getPosition(nodeName) + '');
+
+  if(current == -1){
+    yield shard.release();
     return yield this.acquire(basePath);
   }
 
-  shard.from = current / (last + 1);
-  shard.to = (current + 1) / (last + 1);
-
+  shard.from = current / children.length;
+  shard.to = (current + 1) / children.length;
   return shard;
 });
 
@@ -326,7 +327,7 @@ requested = walk.wrap(function*(){
       try{
         schange = Cb();
         siblings = yield this[zk].w_get_children(this[gp], schange);
-        if(siblings.length < this[lst] + 1) return;
+        if(siblings.length < this[chl]) return;
       }catch(err){
         if(err != ZNONODE) throw err;
         return;
@@ -348,7 +349,7 @@ check = walk.wrap(function*(){
 
   try{
     siblings = yield this[zk].get_children(this[gp], false);
-    if(siblings.length < this[lst] + 1) return true;
+    if(siblings.length < this[chl]) return true;
   }catch(err){
     if(err != ZNONODE) throw err;
     return true;

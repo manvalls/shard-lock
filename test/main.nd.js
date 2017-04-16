@@ -86,10 +86,10 @@ t('Leader takeover', function*(){
   var shards2 = [];
 
   for(let i = 0;i < N;i++) shards[i] = s1.acquire('/shard-lock-test2');
-  yield wait(300);
+  yield wait(500);
 
   for(let i = 0;i < N;i++) shards2[i] = s2.acquire('/shard-lock-test2');
-  yield wait(300);
+  yield wait(500);
 
   s1.close();
 
@@ -101,12 +101,12 @@ t('Leader takeover', function*(){
   for(let i = 0;i < N;i++){
     let shard = shards2[i];
 
-    assert.strictEqual(shard.from, (N + i) / (N * 2));
-    assert.strictEqual(shard.to, (N + i + 1) / (N * 2));
+    assert.strictEqual(shard.from, i / N);
+    assert.strictEqual(shard.to, (i + 1) / N);
   }
 
-  for(let i = 0;i < N;i++) yield shards2[i].requested();
   for(let i = 0;i < N;i++) yield shards2[i].release();
+  for(let i = 0;i < N;i++) yield shards2[i].requested();
   for(let i = 0;i < N;i++) yield shards2[i].lost();
 
   s2.close();
