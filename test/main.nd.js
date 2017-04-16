@@ -72,7 +72,7 @@ t('Leader takeover', function*(){
   var s1 = new ShardLock({
     connect: 'localhost:2181',
     timeout: 2000,
-    wait_time: 1000
+    wait_time: 2000
   });
 
   var s2 = new ShardLock({
@@ -86,7 +86,7 @@ t('Leader takeover', function*(){
   var shards2 = [];
 
   for(let i = 0;i < N;i++) shards[i] = s1.acquire('/shard-lock-test2');
-  yield wait(700);
+  yield wait(300);
   for(let i = 0;i < N;i++) shards2[i] = s2.acquire('/shard-lock-test2');
 
   s1.close();
