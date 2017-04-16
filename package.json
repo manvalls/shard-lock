@@ -1,0 +1,28 @@
+{
+  "name": "shard-lock",
+  "version": "1.0.0",
+  "description": "A protocol designed to help with sharded batch processing",
+  "main": "main.js",
+  "dependencies": {
+    "y-callback": "^1.2.5",
+    "y-resolver": "^10.1.2",
+    "y-timers": "^1.1.9",
+    "y-walk": "^10.0.8",
+    "zookeeper": "^3.4.9-3"
+  },
+  "devDependencies": {
+    "u-test": "^3.8.11"
+  },
+  "scripts": {
+    "test": "u-test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/manvalls/shard-lock.git"
+  },
+  "bugs": {
+    "url": "https://github.com/manvalls/shard-lock/issues"
+  },
+  "author": "Manuel Valls Fernández <manolo@vlrz.es>",
+  "license": "Apache-2.0"
+}
