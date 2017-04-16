@@ -14,7 +14,7 @@
     "u-test": "^3.8.11"
   },
   "scripts": {
-    "test": "u-test"
+    "test": "e= u-test"
   },
   "repository": {
     "type": "git",
