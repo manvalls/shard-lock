@@ -18,14 +18,14 @@ t('Basic sharding', function*(){
   var requested;
 
   do{
-    let shard = yield sl.acquire('/test1');
+    let shard = yield sl.acquire('/shard-lock-test1');
     requested = yield shard.check();
     yield shard.release();
   }while(requested);
 
-  for(let i = 0;i < N;i++) shards[i] = sl.acquire('/test1');
+  for(let i = 0;i < N;i++) shards[i] = sl.acquire('/shard-lock-test1');
   shards = yield shards;
-  for(let i = 0;i < N;i++) shards2[i] = sl.acquire('/test1');
+  for(let i = 0;i < N;i++) shards2[i] = sl.acquire('/shard-lock-test1');
 
   for(let i = 0;i < N;i++){
     let shard = shards[i];
@@ -52,7 +52,7 @@ t('Basic sharding', function*(){
   for(let i = 0;i < N;i++) yield shards2[i].lost();
   for(let i = 0;i < N;i++) yield shards2[i].requested();
 
-  for(let i = 0;i < N;i++) shards[i] = sl.acquire('/test1');
+  for(let i = 0;i < N;i++) shards[i] = sl.acquire('/shard-lock-test1');
   shards = yield shards;
 
   for(let i = 0;i < N;i++){
@@ -84,7 +84,7 @@ t('Leader takeover', function*(){
   var requested;
 
   do{
-    let shard = yield s1.acquire('/test2');
+    let shard = yield s1.acquire('/shard-lock-test2');
     requested = yield shard.check();
     yield shard.release();
   }while(requested);
@@ -93,9 +93,9 @@ t('Leader takeover', function*(){
   var shards = [];
   var shards2 = [];
 
-  for(let i = 0;i < N;i++) shards[i] = s1.acquire('/test2');
+  for(let i = 0;i < N;i++) shards[i] = s1.acquire('/shard-lock-test2');
   yield wait(300);
-  for(let i = 0;i < N;i++) shards2[i] = s2.acquire('/test2');
+  for(let i = 0;i < N;i++) shards2[i] = s2.acquire('/shard-lock-test2');
 
   s1.close();
 
@@ -126,9 +126,9 @@ t('shard.ack() vs shard.release()', function*(){
   });
 
   var [shard1, shard2, shard3] = yield [
-    sl.acquire('/test3'),
-    sl.acquire('/test3'),
-    sl.acquire('/test3')
+    sl.acquire('/shard-lock-test3'),
+    sl.acquire('/shard-lock-test3'),
+    sl.acquire('/shard-lock-test3')
   ];
 
   assert(!(yield shard1.check()));
