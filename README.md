@@ -26,9 +26,10 @@ var ShardLock = require('shard-lock'),
     });
 ```
 
-The ShardLock constructor accepts all options supported by [zookeeper](https://www.npmjs.com/package/zookeeper), used for establishing the connection, plus a protocol-specific option:
+The ShardLock constructor accepts all options supported by [zookeeper](https://www.npmjs.com/package/zookeeper), used for establishing the connection, plus the following protocol-specific options:
 
 - `wait_time`: the number of milliseconds to wait before acquiring the lock, 500 by default
+- `init_timeout`: the number of milliseconds to wait before giving up while trying to connect to ZooKeeper
 
 ## shardLock.close( )
 

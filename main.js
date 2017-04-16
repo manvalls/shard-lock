@@ -1,6 +1,7 @@
 var path = require('path'),
     walk = require('y-walk'),
     Cb = require('y-callback'),
+    NCb = require('y-callback/node'),
     wait = require('y-timers/wait'),
     Resolver = require('y-resolver'),
     {Promise: ZooKeeper, ZOO_SEQUENCE, ZOO_EPHEMERAL, ZNONODE, ZBADVERSION, ZNODEEXISTS, ZNOTEMPTY} = require('zookeeper'),
@@ -15,15 +16,17 @@ var path = require('path'),
     gp = Symbol(),
     wt = Symbol(),
     chl = Symbol(),
+    it = Symbol(),
 
     acquire, release, requested, lost, check, ack,
     initZk, getGroups;
 
 class ShardLock{
 
-  constructor({ connect, timeout, debug_level, host_order_deterministic, wait_time = 500 } = {}){
+  constructor({ connect, timeout, debug_level, host_order_deterministic, wait_time = 500, init_timeout } = {}){
 
     this[wt] = wait_time;
+    this[it] = init_timeout;
     this[options] = { connect, timeout, debug_level, host_order_deterministic };
 
     let init = (...args) => {
@@ -64,7 +67,6 @@ class Shard{
   constructor(){
 
     this[lostCb] = Cb(() => {
-      if(!this[zk]) return;
       this[zk].removeListener('error', this[lostCb]);
       this[zk].removeListener('close', this[lostCb]);
     });
@@ -135,7 +137,7 @@ function wrappedListener(shard){
   if(this.rejected) shard[lostCb]();
 }
 
-acquire = walk.wrap(function*(shard, basePath){
+acquire = walk.wrap(function*(shard, basePath = '/shard-lock'){
   var prefix = path.resolve(basePath, 'group-'),
       processing, awaiting, data, current,
       group, groupPath, nodePath, nodeName,
@@ -374,11 +376,17 @@ initZk = walk.wrap(function*(shardLock, shard){
   shard[zk].once('close', shard[lostCb]);
 
   if(!shardLock[inited]){
-    let cb = Cb();
+    let cb = NCb();
 
     shardLock[zk].connect(shardLock[options], cb);
-    let [err] = yield cb;
-    if(err) throw err;
+
+    if(shardLock[it]) yield {
+      cb: cb,
+      it: wait(shardLock[it])
+    };
+
+    else yield cb;
+
     shardLock[inited] = true;
   }
 

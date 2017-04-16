@@ -18,14 +18,14 @@ t('Basic sharding', function*(){
   var requested;
 
   do{
-    let shard = yield sl.acquire('/shard-lock-test1');
+    let shard = yield sl.acquire();
     requested = yield shard.check();
     yield shard.release();
   }while(requested);
 
-  for(let i = 0;i < N;i++) shards[i] = sl.acquire('/shard-lock-test1');
+  for(let i = 0;i < N;i++) shards[i] = sl.acquire();
   shards = yield shards;
-  for(let i = 0;i < N;i++) shards2[i] = sl.acquire('/shard-lock-test1');
+  for(let i = 0;i < N;i++) shards2[i] = sl.acquire();
 
   for(let i = 0;i < N;i++){
     let shard = shards[i];
@@ -52,7 +52,7 @@ t('Basic sharding', function*(){
   for(let i = 0;i < N;i++) yield shards2[i].lost();
   for(let i = 0;i < N;i++) yield shards2[i].requested();
 
-  for(let i = 0;i < N;i++) shards[i] = sl.acquire('/shard-lock-test1');
+  for(let i = 0;i < N;i++) shards[i] = sl.acquire();
   shards = yield shards;
 
   for(let i = 0;i < N;i++){
@@ -146,5 +146,25 @@ t('shard.ack() vs shard.release()', function*(){
   yield shard1.lost();
   yield shard2.lost();
   yield shard3.lost();
+
+});
+
+t('Wrong port', function*(){
+  var sl = new ShardLock({
+    connect: 'localhost:2198',
+    timeout: 2000,
+    init_timeout: 1000
+  });
+
+  var error;
+
+  try{
+    yield sl.acquire();
+  }catch(e){
+    error = e;
+  }
+
+  assert(!!error);
+  sl.close();
 
 });
