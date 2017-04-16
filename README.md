@@ -22,14 +22,18 @@ As an example, let's suppose you need to write a distributed batch process which
 var ShardLock = require('shard-lock'),
     sl = new ShardLock({
       connect: 'localhost:2181',
-      wait_time: 1000
+      wait_time: 1000,
+      auth: {
+        digest: 'username:password'
+      }
     });
 ```
 
-The ShardLock constructor accepts all options supported by [zookeeper](https://www.npmjs.com/package/zookeeper), used for establishing the connection, plus the following protocol-specific options:
+The ShardLock constructor accepts all options supported by [zookeeper](https://www.npmjs.com/package/zookeeper), used for establishing the connection, plus the following optional ones:
 
 - `wait_time`: the number of milliseconds to wait before acquiring the lock, 500 by default
 - `init_timeout`: the number of milliseconds to wait before giving up while trying to connect to ZooKeeper
+- `auth`: a map with *schemes* as keys and *auths* as values
 
 ## shardLock.close( )
 

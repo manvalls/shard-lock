@@ -153,7 +153,10 @@ t('Wrong port', function*(){
   var sl = new ShardLock({
     connect: 'localhost:2198',
     timeout: 2000,
-    init_timeout: 1000
+    init_timeout: 1000,
+    auth: {
+      foo: 'bar'
+    }
   });
 
   var error;

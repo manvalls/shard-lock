@@ -17,16 +17,18 @@ var path = require('path'),
     wt = Symbol(),
     chl = Symbol(),
     it = Symbol(),
+    au = Symbol(),
 
     acquire, release, requested, lost, check, ack,
     initZk, getGroups;
 
 class ShardLock{
 
-  constructor({ connect, timeout, debug_level, host_order_deterministic, wait_time = 500, init_timeout } = {}){
+  constructor({ connect, timeout, debug_level, host_order_deterministic, wait_time = 500, init_timeout , auth = {}} = {}){
 
     this[wt] = wait_time;
     this[it] = init_timeout;
+    this[au] = auth;
     this[options] = { connect, timeout, debug_level, host_order_deterministic };
 
     let init = (...args) => {
@@ -376,16 +378,24 @@ initZk = walk.wrap(function*(shardLock, shard){
   shard[zk].once('close', shard[lostCb]);
 
   if(!shardLock[inited]){
+    let awaitCb;
+
+    if(shardLock[it]){
+      let w = wait(shardLock[it]);
+      awaitCb = cb => ({cb, w});
+    }else{
+      awaitCb = cb => cb;
+    }
+
     let cb = NCb();
-
     shardLock[zk].connect(shardLock[options], cb);
+    yield awaitCb(cb);
 
-    if(shardLock[it]) yield {
-      cb: cb,
-      it: wait(shardLock[it])
-    };
-
-    else yield cb;
+    for(let key of Object.keys(shardLock[au])){
+      let cb = NCb();
+      shardLock[zk].add_auth(key, shardLock[au][key], cb);
+      yield awaitCb(cb);
+    }
 
     shardLock[inited] = true;
   }
