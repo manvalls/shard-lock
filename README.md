@@ -59,11 +59,11 @@ Returns a promise which will be resolved to a Shard instance.
 
 ## shard.from
 
-A number in the `[0,1)` range. It represents the start of the partition the lock of which was acquired. It is **inclusive**.
+A number in the `[0,1)` range. It represents the start of the partition the lock of which was acquired. It is an **including** endpoint.
 
 ## shard.to
 
-A number in the `(0,1]` range. It represents the end of the partition the lock of which was acquired. It is **exclusive**.
+A number in the `(0,1]` range. It represents the end of the partition the lock of which was acquired. It is an **excluding** endpoint.
 
 ## shard.path
 
