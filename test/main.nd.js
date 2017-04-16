@@ -81,16 +81,6 @@ t('Leader takeover', function*(){
     wait_time: 1000
   });
 
-  // Cleaning step
-
-  var requested;
-
-  do{
-    let shard = yield s1.acquire('/shard-lock-test2');
-    requested = yield shard.check();
-    yield shard.release();
-  }while(requested);
-
   var N = 4;
   var shards = [];
   var shards2 = [];
