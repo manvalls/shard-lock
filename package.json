@@ -1,6 +1,6 @@
 {
   "name": "shard-lock",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A protocol designed to help with sharded batch processing",
   "main": "main.js",
   "dependencies": {
