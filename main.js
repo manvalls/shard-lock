@@ -298,6 +298,7 @@ release = walk.wrap(function*(){
 
   try{
     yield this[zk].delete_(this[node], -1);
+    yield getGroups(this[zk], this[bp]);
   }catch(err){
     if(err != ZNONODE) throw err;
   }finally{
